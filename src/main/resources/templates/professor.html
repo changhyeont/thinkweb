@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>교수 페이지</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .classroom-card {
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .classroom-code {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .create-classroom-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>강의실 목록</h2>
+        <div id="classroomList" class="row">
+            <!-- 강의실 카드들이 동적으로 추가됨 -->
+        </div>
+
+        <!-- 강의실 생성 버튼 -->
+        <button class="btn btn-primary create-classroom-btn" data-bs-toggle="modal" data-bs-target="#createClassroomModal">
+            강의실 개설
+        </button>
+    </div>
+
+    <!-- 강의실 생성 모달 -->
+    <div class="modal fade" id="createClassroomModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">새 강의실 개설</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createClassroomForm">
+                        <div class="mb-3">
+                            <label for="classroomName" class="form-label">강의실 이름</label>
+                            <input type="text" class="form-control" id="classroomName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="classroomDescription" class="form-label">강의실 설명</label>
+                            <textarea class="form-control" id="classroomDescription"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="createClassroomBtn">생성</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClassrooms();
+            
+            // 강의실 생성 버튼 클릭 이벤트
+            document.getElementById('createClassroomBtn').addEventListener('click', createClassroom);
+        });
+
+        async function loadClassrooms() {
+            try {
+                const response = await fetch('/api/classroom/list', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const classrooms = await response.json();
+                displayClassrooms(classrooms);
+            } catch (error) {
+                console.error('강의실 목록 로딩 실패:', error);
+            }
+        }
+
+        function displayClassrooms(classrooms) {
+            const container = document.getElementById('classroomList');
+            container.innerHTML = '';
+
+            classrooms.forEach(classroom => {
+                const card = document.createElement('div');
+                card.className = 'col-md-4';
+                card.innerHTML = `
+                    <div class="card classroom-card" onclick="enterClassroom('${classroom.id}')">
+                        <div class="card-body">
+                            <h5 class="card-title">${classroom.name}</h5>
+                            <p class="classroom-code">초대 코드: ${classroom.inviteCode}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function createClassroom() {
+            const name = document.getElementById('classroomName').value;
+            const description = document.getElementById('classroomDescription').value;
+
+            try {
+                const response = await fetch('/api/classroom/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ name, description })
+                });
+
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createClassroomModal'));
+                    modal.hide();
+                    loadClassrooms();
+                }
+            } catch (error) {
+                console.error('강의실 생성 실패:', error);
+            }
+        }
+
+        function enterClassroom(classroomId) {
+            window.location.href = `/classroom/${classroomId}`;
+        }
+    </script>
+</body>
+</html> 

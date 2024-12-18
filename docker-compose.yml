@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: think-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234     # root 비밀번호
+      MYSQL_DATABASE: thinkdb           # 데이터베이스 이름
+      MYSQL_USER: think                 # 사용자 이름
+      MYSQL_PASSWORD: think1234         # 사용자 비밀번호
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  mysql-data:
